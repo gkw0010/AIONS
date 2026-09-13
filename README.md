@@ -1,4 +1,4 @@
-# Mask2Former inference
+# AINOS
 
 ## Installation
 
