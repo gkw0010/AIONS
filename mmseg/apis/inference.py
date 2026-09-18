@@ -3,19 +3,15 @@ import warnings
 from pathlib import Path
 from typing import Optional, Union
 
-import mmcv
-import numpy as np
 import torch
 from mmengine import Config
 from mmengine.registry import init_default_scope
 from mmengine.runner import load_checkpoint
-from mmengine.utils import mkdir_or_exist
 
 from mmseg.models import BaseSegmentor
 from mmseg.registry import MODELS
 from mmseg.structures import SegDataSample
 from mmseg.utils import SampleList, dataset_aliases, get_classes, get_palette
-from mmseg.visualization import SegLocalVisualizer
 from .utils import ImageType, _preprare_data
 
 
@@ -116,74 +112,3 @@ def inference_model(model: BaseSegmentor,
         results = model.test_step(data)
 
     return results if is_batch else results[0]
-
-
-def show_result_pyplot(model: BaseSegmentor,
-                       img: Union[str, np.ndarray],
-                       result: SegDataSample,
-                       opacity: float = 0.5,
-                       title: str = '',
-                       draw_gt: bool = True,
-                       draw_pred: bool = True,
-                       wait_time: float = 0,
-                       show: bool = True,
-                       with_labels: Optional[bool] = True,
-                       save_dir=None,
-                       out_file=None):
-    """Visualize the segmentation results on the image.
-
-    Args:
-        model (nn.Module): The loaded segmentor.
-        img (str or np.ndarray): Image filename or loaded image.
-        result (SegDataSample): The prediction SegDataSample result.
-        opacity(float): Opacity of painted segmentation map.
-            Default 0.5. Must be in (0, 1] range.
-        title (str): The title of pyplot figure.
-            Default is ''.
-        draw_gt (bool): Whether to draw GT SegDataSample. Default to True.
-        draw_pred (bool): Whether to draw Prediction SegDataSample.
-            Defaults to True.
-        wait_time (float): The interval of show (s). 0 is the special value
-            that means "forever". Defaults to 0.
-        show (bool): Whether to display the drawn image.
-            Default to True.
-        with_labels(bool, optional): Add semantic labels in visualization
-            result, Default to True.
-        save_dir (str, optional): Save file dir for all storage backends.
-            If it is None, the backend storage will not save any data.
-        out_file (str, optional): Path to output file. Default to None.
-
-
-
-    Returns:
-        np.ndarray: the drawn image which channel is RGB.
-    """
-    if hasattr(model, 'module'):
-        model = model.module
-    if isinstance(img, str):
-        image = mmcv.imread(img, channel_order='rgb')
-    else:
-        image = img
-    if save_dir is not None:
-        mkdir_or_exist(save_dir)
-    # init visualizer
-    visualizer = SegLocalVisualizer(
-        vis_backends=[dict(type='LocalVisBackend')],
-        save_dir=save_dir,
-        alpha=opacity)
-    visualizer.dataset_meta = dict(
-        classes=model.dataset_meta['classes'],
-        palette=model.dataset_meta['palette'])
-    visualizer.add_datasample(
-        name=title,
-        image=image,
-        data_sample=result,
-        draw_gt=draw_gt,
-        draw_pred=draw_pred,
-        wait_time=wait_time,
-        out_file=out_file,
-        show=show,
-        with_labels=with_labels)
-    vis_img = visualizer.get_image()
-
-    return vis_img

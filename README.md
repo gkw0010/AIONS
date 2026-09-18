@@ -15,7 +15,7 @@ pip install torch==2.2.1 torchvision==0.17.1 \
 pip install -U openmim
 mim install "mmcv==2.1.0" "mmengine==0.10.7" "mmdet==3.3.0"
 
-cd mmsegmentation
+cd AIONS
 pip install -e .
 ```
 

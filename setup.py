@@ -9,7 +9,8 @@ from setuptools import find_packages, setup
 
 
 def readme():
-    with open('README.md', encoding='utf-8') as f:
+    readme_path = osp.join(osp.dirname(__file__), 'README.md')
+    with open(readme_path, encoding='utf-8') as f:
         content = f.read()
     return content
 
@@ -167,15 +168,14 @@ def add_mim_extension():
 if __name__ == '__main__':
     add_mim_extension()
     setup(
-        name='mmsegmentation',
+        name='ainos',
         version=get_version(),
-        description='Open MMLab Semantic Segmentation Toolbox and Benchmark',
+        description='AINOS image and video inference',
         long_description=readme(),
         long_description_content_type='text/markdown',
-        author='MMSegmentation Contributors',
-        author_email='openmmlab@gmail.com',
+        author='AINOS Contributors',
         keywords='computer vision, semantic segmentation',
-        url='https://github.com/open-mmlab/mmsegmentation',
+        url='https://github.com/gkw0010/AIONS',
         packages=find_packages(exclude=('configs', 'tools', 'demo')),
         include_package_data=True,
         classifiers=[
