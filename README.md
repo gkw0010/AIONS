@@ -1,4 +1,4 @@
-# AINOS
+# AI-based operative navigation for endoscopic submucosal dissection
 
 ## Installation
 
