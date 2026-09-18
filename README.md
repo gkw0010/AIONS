@@ -29,7 +29,7 @@ If one of the OpenMMLab dependencies is missing, install it with OpenMIM:
 pip install -U openmim
 mim install "mmcv>=2.0.0rc4,<2.2.0" "mmengine>=0.5.0,<1.0.0" "mmdet>=3.0.0,<4.0.0"
 ```
-
+Config and checkpoint files are available at [Google Drive](https://drive.google.com/drive/folders/1-5ugRvtX5AChN6yvOoITGNAQjBdLf3de).
 ## Image inference
 
 Put the configuration and checkpoint anywhere on the machine, then run the
