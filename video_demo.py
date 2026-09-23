@@ -138,18 +138,18 @@ def fit_single_arc_from_mask(mask, prev_curve_state=None):
     """
     Fit a single arc from a binary mask.
     Return:
-      curve_pts: ndarray, shape [N,1,2], int32
-      curve_state: dict or None
+        curve_pts: ndarray, shape [N,1,2], int32
+        curve_state: dict or None
     """
+
     ys, xs = np.where(mask > 0)
+
     if len(xs) < 20:
         return None, prev_curve_state
 
-    # Determine the dominant direction:
-    # Fit x = f(y) when the y span is larger
-    # Otherwise fit y = f(x)
     range_y = ys.max() - ys.min()
     range_x = xs.max() - xs.min()
+
     fit_x_as_func_of_y = (range_y >= range_x)
 
     if fit_x_as_func_of_y:
@@ -161,46 +161,50 @@ def fit_single_arc_from_mask(mask, prev_curve_state=None):
         dep = ys.astype(np.float32)
         mode = 'y=f(x)'
 
-    # Aggregate bins to reduce local spikes
     vmin = int(indep.min())
     vmax = int(indep.max())
 
-    indep_samples = []
-    dep_samples = []
 
-    for start in range(vmin, vmax + 1, CURVE_BIN_SIZE):
-        end = start + CURVE_BIN_SIZE
-        sel = (indep >= start) & (indep < end)
-        if np.count_nonzero(sel) < 3:
-            continue
-
-        indep_bin = indep[sel]
-        dep_bin = dep[sel]
-
-        indep_samples.append(float(np.mean(indep_bin)))
-        dep_samples.append(float(np.median(dep_bin)))
-
-    indep_samples = np.asarray(indep_samples, dtype=np.float32)
-    dep_samples = np.asarray(dep_samples, dtype=np.float32)
-
-    if len(indep_samples) < CURVE_DEGREE + 2:
+    if np.unique(indep).size < CURVE_DEGREE + 1:
         return None, prev_curve_state
 
-    # Polynomial fitting
-    coeff = np.polyfit(indep_samples, dep_samples, deg=CURVE_DEGREE).astype(np.float32)
 
-    # Temporally smooth curve parameters
+    coeff = np.polyfit(
+        indep,
+        dep,
+        deg=CURVE_DEGREE
+    ).astype(np.float32)
+
+
     if prev_curve_state is not None and prev_curve_state['mode'] == mode:
+
         prev_coeff = prev_curve_state['coeff']
         prev_vmin = prev_curve_state['vmin']
         prev_vmax = prev_curve_state['vmax']
 
-        coeff = CURVE_COEFF_ALPHA * prev_coeff + (1.0 - CURVE_COEFF_ALPHA) * coeff
-        vmin = int(CURVE_COEFF_ALPHA * prev_vmin + (1.0 - CURVE_COEFF_ALPHA) * vmin)
-        vmax = int(CURVE_COEFF_ALPHA * prev_vmax + (1.0 - CURVE_COEFF_ALPHA) * vmax)
+        coeff = (
+            CURVE_COEFF_ALPHA * prev_coeff
+            + (1.0 - CURVE_COEFF_ALPHA) * coeff
+        )
 
-    # Sample curve points
-    indep_draw = np.linspace(vmin, vmax, CURVE_SAMPLES, dtype=np.float32)
+        vmin = int(
+            CURVE_COEFF_ALPHA * prev_vmin
+            + (1.0 - CURVE_COEFF_ALPHA) * vmin
+        )
+
+        vmax = int(
+            CURVE_COEFF_ALPHA * prev_vmax
+            + (1.0 - CURVE_COEFF_ALPHA) * vmax
+        )
+
+
+    indep_draw = np.linspace(
+        vmin,
+        vmax,
+        CURVE_SAMPLES,
+        dtype=np.float32
+    )
+
     dep_draw = np.polyval(coeff, indep_draw)
 
     if mode == 'x=f(y)':
@@ -210,12 +214,16 @@ def fit_single_arc_from_mask(mask, prev_curve_state=None):
         x_draw = indep_draw
         y_draw = dep_draw
 
-    # Clip to image bounds
+
     h, w = mask.shape[:2]
+
     x_draw = np.clip(x_draw, 0, w - 1)
     y_draw = np.clip(y_draw, 0, h - 1)
 
-    curve_pts = np.stack([x_draw, y_draw], axis=1).astype(np.int32).reshape(-1, 1, 2)
+    curve_pts = np.stack(
+        [x_draw, y_draw],
+        axis=1
+    ).astype(np.int32).reshape(-1, 1, 2)
 
     curve_state = {
         'mode': mode,
